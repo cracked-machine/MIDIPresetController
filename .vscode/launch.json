@@ -1,0 +1,34 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            // https://wiki.segger.com/J-Link_Visual_Studio_Code
+            "type": "cortex-debug",
+            "request": "launch",
+            "name": "Debug J-Link",
+            "cwd": "${workspaceRoot}",
+            "showDevDebugOutput": "raw",
+            "executable": "${workspaceRoot}/build/build.elf",
+            "serverpath": "/opt/JLink_Linux_V758_x86_64/JLinkGDBServerCLExe",
+            "servertype": "jlink",
+            "device": "STM32L011D4",
+            "interface": "swd",
+            "runToEntryPoint": "main",
+            "svdFile": "${workspaceRoot}/STM32L0x1.svd",
+            "rttConfig": {
+                "enabled": true,
+                "address": "auto",
+                "decoders": [
+                    {
+                        "label": "",
+                        "port": 0,
+                        "type": "console"
+                    }
+                ]
+            }
+        }
+    ]
+}
