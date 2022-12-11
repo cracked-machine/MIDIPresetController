@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
 
-# configuration command
+# configuration command run automatically by cmake-tools extension. 
 # /opt/cmake-3.22.0-rc2-linux-x86_64/bin/cmake 
     # --no-warn-unused-cli 
     # -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE 
@@ -10,6 +10,9 @@ cmake_minimum_required(VERSION 3.13)
     # -S/home/chris/Projects/Embedded/MIDIPresetControllerSW 
     # -B/home/chris/Projects/Embedded/MIDIPresetControllerSW/build 
     # -G Ninja
+
+# this variable is only used by size/objcopy. compiler is set by cmake configuration command.
+set(TOOLCHAIN /opt/gcc-arm-none-eabi-10.3-2021.10/bin/arm-none-eabi-)
 
 set(CMAKE_C_STANDARD    17)
 set(CMAKE_CXX_STANDARD  20)

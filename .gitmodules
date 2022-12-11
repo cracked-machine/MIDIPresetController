@@ -1,0 +1,3 @@
+[submodule "stm32_dev_docker"]
+	path = stm32_dev_docker
+	url = https://github.com/cracked-machine/stm32_dev_docker

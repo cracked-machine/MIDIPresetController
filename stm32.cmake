@@ -1,10 +1,6 @@
 message("\n** Configuring STM32 Environment **")
 message("** Selected Kit: ${CMAKE_C_COMPILER} **\n")
 
-
-set(TOOLCHAIN /opt/arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-eabi/bin/arm-none-eabi-)
-
-
 set(DEVICE              STM32L011xx)
 set(ARCH			    armv6-m)
 set(CORE			    cortex-m0plus)

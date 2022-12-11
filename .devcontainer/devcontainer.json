@@ -1,0 +1,24 @@
+{
+    // toolchain versions supported: 10.3-2021.10 and 11.3.rel1
+    "image": "ghcr.io/cracked-machine/stm32_dev:10.3-2021.10",
+    "name": "stm32 dev",
+    "extensions": [
+        "ms-vscode.cpptools",
+        "ms-vscode.cmake-tools",
+        "marus25.cortex-debug"
+    ],
+    "runArgs": [
+        // don't block any ports
+        "-P",
+        // Enable access to all devices on the host 
+        "--privileged"
+    ],
+    "containerEnv": {
+        // Setup X11 client port
+        "DISPLAY": "unix:0"
+    },
+    "mounts": [
+        // Map the X11 socket from the host
+        "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind,consistency=cached"
+    ]
+}
