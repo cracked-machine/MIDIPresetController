@@ -28,13 +28,12 @@ add_executable(${BUILD_NAME} "")
 
 # build dependencies
 target_sources(${BUILD_NAME} PUBLIC
-    src/system_stm32l0xx.c
-    src/startup_stm32l011d4px.s
+    src/sys/system_stm32l0xx.c
+    src/sys/startup_stm32l011d4px.s
     src/main.c
 )
 target_include_directories(${BUILD_NAME} PUBLIC
-    CMSIS/Include
-    CMSIS/Device/ST/STM32L0xx/Include
+    inc/CMSIS
     inc
 )
 
