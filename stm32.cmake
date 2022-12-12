@@ -16,6 +16,10 @@ add_compile_definitions(${DEVICE})
 # C compiler settings
 set(CMAKE_C_FLAGS "-mcpu=cortex-m0plus -std=gnu17 -g3 -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -mfloat-abi=soft -mthumb" CACHE INTERNAL "c compiler flags ")
 
+# CXX compiler settings
+set(DISABLED_WARNINGS "-Wno-volatile")
+set(CMAKE_CXX_FLAGS "${DISABLED_WARNINGS} -mcpu=cortex-m0plus -g3 -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -mfloat-abi=soft -mthumb" CACHE INTERNAL "c compiler flags ")
+
 # Assembler compiler settings
 set(CMAKE_ASM_FLAGS "-mcpu=cortex-m0plus -g3 -DDEBUG -c -x assembler-with-cpp -MMD -MP -MF'Core/Startup/startup_stm32l011d4px.d' -MT'Core/Startup/startup_stm32l011d4px.o' --specs=nano.specs -mfloat-abi=soft -mthumb" CACHE INTERNAL "asm compiler flags")
 
@@ -24,6 +28,7 @@ set(CMAKE_EXE_LINKER_FLAGS  "-mcpu=cortex-m0plus -T${LINKER_SCRIPT} --specs=nosy
 
 # This must come after compiler/linker settings
 enable_language(C)
+enable_language(CXX)
 enable_language(ASM)
 
 

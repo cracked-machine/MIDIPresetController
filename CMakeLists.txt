@@ -14,8 +14,8 @@ cmake_minimum_required(VERSION 3.13)
 # this variable is only used by size/objcopy. compiler is set by cmake configuration command.
 set(TOOLCHAIN /opt/gcc-arm-none-eabi-10.3-2021.10/bin/arm-none-eabi-)
 
-set(CMAKE_C_STANDARD    17)
-set(CMAKE_CXX_STANDARD  20)
+set(CMAKE_C_STANDARD    23)
+set(CMAKE_CXX_STANDARD  23)
 
 # toolchain definitions
 include(stm32.cmake)
@@ -30,7 +30,7 @@ add_executable(${BUILD_NAME} "")
 target_sources(${BUILD_NAME} PUBLIC
     src/sys/system_stm32l0xx.c
     src/sys/startup_stm32l011d4px.s
-    src/main.c
+    src/main.cpp
 )
 target_include_directories(${BUILD_NAME} PUBLIC
     inc/CMSIS
