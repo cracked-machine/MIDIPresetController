@@ -1,6 +1,8 @@
 {
     // toolchain versions supported: 10.3-2021.10 and 11.3.rel1
-    "image": "ghcr.io/cracked-machine/stm32_dev:10.3-2021.10",
+    // "image": "ghcr.io/cracked-machine/stm32_dev:10.3-2021.10",
+    // "image": "ghcr.io/cracked-machine/stm32_dev:11.3.rel1",
+    "image": "ghcr.io/cracked-machine/stm32_dev:12.2.rel1",
     "name": "stm32 dev",
     "extensions": [
         "ms-vscode.cpptools",
