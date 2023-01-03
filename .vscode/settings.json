@@ -1,3 +1,4 @@
 {
-    "cmake.cmakePath": "/opt/cmake-3.24.2-linux-x86_64/bin/cmake"
+	"cmake.cmakePath": "/opt/cmake-3.24.2-linux-x86_64/bin/cmake",
+	"cortex-debug.armToolchainPath":"/opt/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi/bin"
 }
