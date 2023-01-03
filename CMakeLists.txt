@@ -12,7 +12,7 @@ cmake_minimum_required(VERSION 3.13)
     # -G Ninja
 
 # this variable is only used by size/objcopy. compiler is set by cmake configuration command.
-set(TOOLCHAIN /opt/gcc-arm-none-eabi-10.3-2021.10/bin/arm-none-eabi-)
+# set(TOOLCHAIN /opt/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi/bin/arm-none-eabi-)
 
 set(CMAKE_C_STANDARD    23)
 set(CMAKE_CXX_STANDARD  23)
@@ -28,6 +28,7 @@ add_executable(${BUILD_NAME} "")
 
 # build dependencies
 target_sources(${BUILD_NAME} PUBLIC
+    src/sys/syscalls.c
     src/sys/system_stm32l0xx.c
     src/sys/startup_stm32l011d4px.s
     src/main.cpp
@@ -40,8 +41,8 @@ target_include_directories(${BUILD_NAME} PUBLIC
 # display ELF info
 # add_custom_command(TARGET ${BUILD_NAME} POST_BUILD COMMAND ${TOOLCHAIN}readelf -l ${BUILD_NAME})
 add_custom_command(TARGET ${BUILD_NAME} POST_BUILD COMMAND echo ------------------------------------------------------)
-add_custom_command(TARGET ${BUILD_NAME} POST_BUILD COMMAND ${TOOLCHAIN}size ${BUILD_NAME})
+add_custom_command(TARGET ${BUILD_NAME} POST_BUILD COMMAND size ${BUILD_NAME})
 add_custom_command(TARGET ${BUILD_NAME} POST_BUILD COMMAND echo ------------------------------------------------------)
 
 # set output binary
-add_custom_target(build.bin ALL DEPENDS ${BUILD_NAME} COMMAND ${TOOLCHAIN}objcopy -O ihex ${BUILD_NAME} ${HEX_NAME})
+add_custom_target(build.bin ALL DEPENDS ${BUILD_NAME} COMMAND objcopy -O ihex ${BUILD_NAME} ${HEX_NAME})
