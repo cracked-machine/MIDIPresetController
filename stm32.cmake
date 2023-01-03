@@ -14,10 +14,10 @@ set(MAP_NAME            build.map)
 add_compile_definitions(${DEVICE})
 
 # C compiler settings
-set(CMAKE_C_FLAGS "-mcpu=cortex-m0plus -std=gnu17 -g3 -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -mfloat-abi=soft -mthumb" CACHE INTERNAL "c compiler flags ")
+set(CMAKE_C_FLAGS "-mcpu=cortex-m0plus -std=gnu17 -g3 -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -mfloat-abi=soft -mthumb " CACHE INTERNAL "c compiler flags ")
 
 # CXX compiler settings
-set(DISABLED_WARNINGS "-Wno-volatile")
+set(DISABLED_WARNINGS "-Wno-volatile")  # CMSIS registers use volatile, which is a deprecated keyword in C++20
 set(CMAKE_CXX_FLAGS "${DISABLED_WARNINGS} -mcpu=cortex-m0plus -g3 -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -mfloat-abi=soft -mthumb" CACHE INTERNAL "c compiler flags ")
 
 # Assembler compiler settings
