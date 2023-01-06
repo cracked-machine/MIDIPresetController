@@ -4,7 +4,7 @@ This is a simple MIDI controller for Guitar FX pedals. An STM32L011D4 is used to
 
 The project is designed to fit into a [Hammond 1455J1602](HW/techdocs/Hammond_1455J1602BK_enclosure.pdf) enclosure. 
 
-<iframe width="640" height="480" style="border:1px solid #eeeeee;" src="https://3dviewer.net/embed.html#model=https://raw.githubusercontent.com/cracked-machine/MIDIPresetController/master/HW/res/3d/1455J1602/J%20Extrusion%20160mm.igs$camera=-90.35377,133.97170,260.70755,0.00000,13.50000,80.00000,0.00000,1.00000,0.00000,45.00000$cameramode=perspective$envsettings=fishermans_bastion,off$backgroundcolor=255,255,255,255$defaultcolor=200,200,200$edgesettings=off,0,0,0,1"></iframe>
+3D model can be found [here](https://3dviewer.net#model=https://raw.githubusercontent.com/cracked-machine/MIDIPresetController/master/HW/res/3d/1455J1602/J%20Extrusion%20160mm.igs)
 
 This is an extruded alu case. The PCB slides in from one side.  
 
