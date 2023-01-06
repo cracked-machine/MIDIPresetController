@@ -14,11 +14,12 @@ cmake_minimum_required(VERSION 3.13)
 # this variable is only used by size/objcopy. compiler is set by cmake configuration command.
 # set(TOOLCHAIN /opt/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi/bin/arm-none-eabi-)
 
+
 set(CMAKE_C_STANDARD    23)
 set(CMAKE_CXX_STANDARD  23)
 
 # toolchain definitions
-include(stm32.cmake)
+include(SW/stm32.cmake)
 
 # Declare the project 
 project(MIDIPresetController VERSION 0.1 DESCRIPTION "MIDIPresetController")
@@ -28,15 +29,16 @@ add_executable(${BUILD_NAME} "")
 
 # build dependencies
 target_sources(${BUILD_NAME} PUBLIC
-    src/sys/syscalls.c
-    src/sys/system_stm32l0xx.c
-    src/sys/startup_stm32l011d4px.s
-    src/main.cpp
+    SW/src/sys/syscalls.c
+    SW/src/sys/system_stm32l0xx.c
+    SW/src/sys/startup_stm32l011d4px.s
+    SW/src/main.cpp
 )
 target_include_directories(${BUILD_NAME} PUBLIC
-    inc/CMSIS
-    inc
+    SW/inc/CMSIS
+    SW/inc
 )
+
 
 # display ELF info
 # add_custom_command(TARGET ${BUILD_NAME} POST_BUILD COMMAND ${TOOLCHAIN}readelf -l ${BUILD_NAME})
