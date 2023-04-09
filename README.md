@@ -28,3 +28,5 @@ A removable "belly plate" on the enclosure provides access to the battery, MIDI 
 ### Development Environment
 
 See [stm32_dev_docker/README.md](https://github.com/cracked-machine/stm32_dev_docker) for instructions on using the `development environment` for this project.
+
+Note: this project is currently configured for a specific version of CMake and ARM compiler. The paths are hard-coded in the project [here](.vscode/settings.json)
