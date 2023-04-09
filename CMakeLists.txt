@@ -33,6 +33,7 @@ target_sources(${BUILD_NAME} PUBLIC
     SW/src/sys/system_stm32l0xx.c
     SW/src/sys/startup_stm32l011d4px.s
     SW/src/main.cpp
+    SW/src/isr.c
 )
 target_include_directories(${BUILD_NAME} PUBLIC
     SW/inc/CMSIS
