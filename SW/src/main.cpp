@@ -10,7 +10,7 @@ static inline void spin(volatile uint32_t count)
         asm("nop");
 }
 
-void setup_led(void)
+void setup_led()
 {
 
     // config PA7 as output (0x01)
@@ -57,9 +57,20 @@ void setup_exti()
     NVIC_SetPriority(EXTI4_15_IRQn,0); 
 }
 
+void setup_timer()
+{
+    RCC->APB2ENR |= RCC_APB2ENR_TIM21EN_Msk;
+    TIM21->CR1 |= (TIM_CR1_ARPE_Msk);       // preload buffer
+    TIM21->DIER |= (TIM_DIER_UIE_Msk);      // enable interrupts
+    TIM21->PSC = 32;                         // prescaler
+    TIM21->ARR = 0xFFFFFFFF;                      // auto-reload value
+    NVIC_EnableIRQ(TIM21_IRQn); 
+    NVIC_SetPriority(TIM21_IRQn,0); 
+    // start the timer
+    TIM21->CR1 |= (TIM_CR1_CEN_Msk);
+}
 
-
-void enable_led(bool enable, uint32_t sleep=0)
+void enable_led(bool enable, uint32_t sleep = 0)
 {
     if (enable)
         GPIOA->BSRR |= GPIO_BSRR_BS_7;
@@ -76,12 +87,13 @@ void toggle_led(uint32_t sleep=0)
         GPIOA->BSRR |= GPIO_BSRR_BS_7;
 }
 
-int main(void)
+int main()
 {
     // enable GPIO RCC
     RCC->IOPENR |= RCC_IOPENR_GPIOAEN;
     setup_led();
     setup_exti();
+    setup_timer();
 
     while (1)
     {
@@ -93,11 +105,19 @@ int main(void)
 
 void EXTI4_15_IRQHandler()
 {
-    // GPIOA->BSRR |= GPIO_BSRR_BS_7;
+    // do stuff
     toggle_led();
     // clear the pending bit for the interrupt line
     if (EXTI->PR == EXTI_IMR_IM10_Msk)
         EXTI->PR |= (EXTI_PR_PIF10_Msk);
     if (EXTI->PR == EXTI_IMR_IM9_Msk)
         EXTI->PR |= (EXTI_PR_PIF9_Msk);
+}
+
+void TIM21_IRQHandler()
+{
+    // do stuff
+    toggle_led();
+    // clear the interrupt
+    TIM21->SR &= ~(TIM_SR_UIF_Msk);
 }
