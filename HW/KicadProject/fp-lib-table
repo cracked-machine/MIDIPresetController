@@ -1,3 +1,4 @@
 (fp_lib_table
-  (lib (name "GenericCoinCellHolders")(type "KiCad")(uri "${KIPRJMOD}/../../KicadLibrary/footprint/BATTERY/GenericCoinCellHolders/GenericCoinCellHolders.pretty")(options "")(descr ""))
+  (version 7)
+  (lib (name "GenericCoinCellHolders")(type "KiCad")(uri "${KIPRJMOD}/../../HW/KicadLibrary/footprint/BATTERY/GenericCoinCellHolders.pretty")(options "")(descr ""))
 )
