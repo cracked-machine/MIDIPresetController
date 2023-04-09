@@ -4,11 +4,15 @@
     // "image": "ghcr.io/cracked-machine/stm32_dev:11.3.rel1",
     "image": "ghcr.io/cracked-machine/stm32_dev:12.2.rel1",
     "name": "stm32 dev",
-    "extensions": [
-        "ms-vscode.cpptools",
-        "ms-vscode.cmake-tools",
-        "marus25.cortex-debug"
-    ],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-vscode.cpptools",
+                "ms-vscode.cmake-tools",
+                "marus25.cortex-debug"
+            ]
+        }
+    },
     "runArgs": [
         // don't block any ports
         "-P",
