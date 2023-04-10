@@ -40,6 +40,9 @@ target_include_directories(${BUILD_NAME} PUBLIC
     SW/inc
 )
 
+# workaround for "build.elf has a LOAD segment with RWX permissions" warning
+# See https://community.st.com/s/question/0D53W00001vno1oSAA/warning-elffile-has-a-load-segment-with-rwx-permissions
+target_link_options(${BUILD_NAME} PRIVATE "LINKER:--no-warn-rwx-segments")
 
 # display ELF info
 # add_custom_command(TARGET ${BUILD_NAME} POST_BUILD COMMAND ${TOOLCHAIN}readelf -l ${BUILD_NAME})
