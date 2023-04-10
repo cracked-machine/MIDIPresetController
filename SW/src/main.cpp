@@ -2,6 +2,12 @@
 #include "main.hpp"
 #include "stm32l011xx.h"
 
+#define _HCLK12MHZ (RCC_CFGR_PLLMUL3 | RCC_CFGR_PLLDIV4)
+#define _HCLK16MHZ (RCC_CFGR_PLLMUL3 | RCC_CFGR_PLLDIV3)
+#define _HCLK24MHZ (RCC_CFGR_PLLMUL3 | RCC_CFGR_PLLDIV2)
+#define _HCLK32MHZ (RCC_CFGR_PLLMUL6 | RCC_CFGR_PLLDIV3)
+
+
 
 static inline void spin(volatile uint32_t count)
 {
@@ -21,7 +27,7 @@ void setup()
     while((RCC->CR & RCC_CR_PLLRDY) != 0) { }                   // Wait for PLLRDY to be cleared
 
     FLASH->ACR |= FLASH_ACR_LATENCY;                            // Set latency to 1 wait state
-    RCC->CFGR |= (RCC_CFGR_PLLMUL4 | RCC_CFGR_PLLDIV2);         // Set the PLL multiplier to 4 and divider by 2 (32MHz)
+    RCC->CFGR |= _HCLK32MHZ;                                    // Set the PLL multiplier to 4 and divider by 2 (32MHz)
     
     RCC->CR |= RCC_CR_PLLON;                                    // Enable the PLL
     while ((RCC->CR & RCC_CR_PLLRDY) == 0) { }                  // Wait until PLLRDY is set
