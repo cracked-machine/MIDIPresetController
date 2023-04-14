@@ -15,6 +15,10 @@
 #define _TIM21_ISR_PRIORITY 0U
 #define _EXTI_ISR_PRIORITY 0U
 
+const volatile uint32_t DEBOUNCE_COOLDOWN{ 100 };
+volatile uint32_t prev_cnt = 0;
+
+
 std::array<uint8_t, 4> msg{0xDE, 0xAD, 0xBE, 0xEF};
 // uint8_t msg[4] = {0xDE, 0xAD, 0xBE, 0xAF};
 uint16_t msg_tx_count = 0;
@@ -122,8 +126,8 @@ void setup()
     EXTI->IMR |= EXTI_IMR_IM9_Msk;                                      // enable interupt request in interrupt mask register
     EXTI->FTSR |= EXTI_FTSR_FT9_Msk;                                    // program trigger resistors with edge detection
     
-    // NVIC_EnableIRQ(EXTI4_15_IRQn);                                      // configure nvic irq channel and prio
-    // NVIC_SetPriority(EXTI4_15_IRQn, _EXTI_ISR_PRIORITY); 
+    NVIC_EnableIRQ(EXTI4_15_IRQn);                                      // configure nvic irq channel and prio
+    NVIC_SetPriority(EXTI4_15_IRQn, _EXTI_ISR_PRIORITY); 
 
     // LPUART //
     ///////////
@@ -148,19 +152,21 @@ void setup()
                     // | USART_CR3_EIE_Msk );                              // Enable error interrupts
     LPUART1->CR1 |= (USART_CR1_UE_Msk);                                  // enable the LPUART
     LPUART1->CR1 |= (USART_CR1_TE_Msk);                                  // send idle frame as first transmission
-    NVIC_SetPriority(LPUART1_IRQn, _LPUART_ISR_PRIORITY);
-    NVIC_EnableIRQ(LPUART1_IRQn);
+    // NVIC_SetPriority(LPUART1_IRQn, _LPUART_ISR_PRIORITY);
+    // NVIC_EnableIRQ(LPUART1_IRQn);
 
     // TIMER21 //
     /////////////
     RCC->APB2ENR |= RCC_APB2ENR_TIM21EN_Msk;                            // enable the APB2 bus clock used by TIM21
     TIM21->CR1 |= (TIM_CR1_ARPE_Msk);                                   // preload buffer
-    TIM21->DIER |= (TIM_DIER_UIE_Msk);                                  // enable interrupts
-    TIM21->PSC = 32;                                                    // prescaler
-    TIM21->ARR = 0xFFFFFFFF;                                            // auto-reload value
-    NVIC_EnableIRQ(TIM21_IRQn); 
-    NVIC_SetPriority(TIM21_IRQn,_TIM21_ISR_PRIORITY); 
-    // TIM21->CR1 |= (TIM_CR1_CEN_Msk);                                    // start the timer
+    TIM21->PSC = 0xFFFF;                                                    // prescaler
+    TIM21->ARR = 0xFFFFFFFE;                                            // auto-reload value
+    
+    // TIM21->DIER |= (TIM_DIER_UIE_Msk);                                  // enable interrupts
+    // NVIC_EnableIRQ(TIM21_IRQn); 
+    // NVIC_SetPriority(TIM21_IRQn,_TIM21_ISR_PRIORITY);    
+    
+    TIM21->CR1 |= (TIM_CR1_CEN_Msk);                                    // start the timer
 
 }
 
@@ -198,7 +204,13 @@ int main()
 void EXTI4_15_IRQHandler()
 {
     // do stuff
-    toggle_led();
+    uint32_t tmp_cnt = TIM21->CNT;
+    if ((tmp_cnt - prev_cnt) > DEBOUNCE_COOLDOWN)
+    {
+        toggle_led();
+    }
+    prev_cnt = tmp_cnt;
+
     // clear the pending bit for the interrupt line
     if (EXTI->PR == EXTI_IMR_IM10_Msk)
         EXTI->PR |= (EXTI_PR_PIF10_Msk);
@@ -210,8 +222,6 @@ void TIM21_IRQHandler()
 {
     // do stuff
     // toggle_led();
-    USART2->TDR = 0xDE;
-
     // clear the interrupt
     TIM21->SR &= ~(TIM_SR_UIF_Msk);
 }
@@ -234,7 +244,8 @@ void LPUART1_IRQHandler()
         else
         {
             
-            LPUART1->TDR = (uint8_t)(msg[msg_tx_count] & (uint8_t)0xFF);       
+            // LPUART1->TDR = (uint8_t)(msg[msg_tx_count] & (uint8_t)0xFF);       
+            LPUART1->TDR = (msg[msg_tx_count] & 0xFF);       
             msg_tx_count++;
         }
         return;
