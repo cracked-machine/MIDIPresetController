@@ -20,6 +20,8 @@ volatile uint32_t prev_cnt = 0;
 
 
 std::array<uint8_t, 4> msg{0xDE, 0xAD, 0xBE, 0xEF};
+
+
 // uint8_t msg[4] = {0xDE, 0xAD, 0xBE, 0xAF};
 uint16_t msg_tx_count = 0;
 uint8_t bytes_sent{0};
@@ -147,13 +149,13 @@ void setup()
     LPUART1->CR2 &= ~(USART_CR2_STOP_Msk);                               // 1 stop bit
     LPUART1->CR1 &= ~(USART_CR1_PCE_Msk);                                // no parity for MIDI
     LPUART1->CR2 &= ~(USART_CR2_MSBFIRST_Msk);                           // LSB first
-    LPUART1->CR1 |=  ( USART_CR1_TXEIE_Msk );                              // Enable TXE (tx data reg transferred) interrupts
+    // LPUART1->CR1 |=  ( USART_CR1_TXEIE_Msk );                              // Enable TXE (tx data reg transferred) interrupts
                     // | USART_CR1_TCIE_Msk);                                // Enable TC (transmission complete) interrupts
                     // | USART_CR3_EIE_Msk );                              // Enable error interrupts
     LPUART1->CR1 |= (USART_CR1_UE_Msk);                                  // enable the LPUART
     LPUART1->CR1 |= (USART_CR1_TE_Msk);                                  // send idle frame as first transmission
-    // NVIC_SetPriority(LPUART1_IRQn, _LPUART_ISR_PRIORITY);
-    // NVIC_EnableIRQ(LPUART1_IRQn);
+    NVIC_SetPriority(LPUART1_IRQn, _LPUART_ISR_PRIORITY);
+    NVIC_EnableIRQ(LPUART1_IRQn);
 
     // TIMER21 //
     /////////////
@@ -208,6 +210,7 @@ void EXTI4_15_IRQHandler()
     if ((tmp_cnt - prev_cnt) > DEBOUNCE_COOLDOWN)
     {
         toggle_led();
+        LPUART1->CR1 |=  ( USART_CR1_TXEIE_Msk );                              // Enable TXE (tx data reg transferred) interrupts
     }
     prev_cnt = tmp_cnt;
 
@@ -240,6 +243,7 @@ void LPUART1_IRQHandler()
         if (msg_tx_count == msg.size())
         {
             msg_tx_count = 0;
+            LPUART1->CR1 &=  ~( USART_CR1_TXEIE_Msk );                           
         }
         else
         {
