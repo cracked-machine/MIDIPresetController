@@ -2,6 +2,7 @@
 #include "main.hpp"
 #include "stm32l011xx.h"
 #include <array>
+#include <SEGGER_RTT.h>
 
 #define UART_DIV_LPUART(__PCLK__, __BAUD__)      (((((uint64_t)(__PCLK__)*256U)) + ((__BAUD__)/2U)) / (__BAUD__))
 
@@ -11,12 +12,18 @@
 #define _HCLK24MHZ (RCC_CFGR_PLLMUL3 | RCC_CFGR_PLLDIV2)
 #define _HCLK32MHZ (RCC_CFGR_PLLMUL6 | RCC_CFGR_PLLDIV3)
 
-#define _LPUART_ISR_PRIORITY 0U
-#define _TIM21_ISR_PRIORITY 0U
-#define _EXTI_ISR_PRIORITY 0U
+const uint32_t _LPUART_ISR_PRIORITY = 0U;
+const uint32_t _TIM21_ISR_PRIORITY = 0U;
+const uint32_t _EXTI_ISR_PRIORITY = 0U;
 
-const volatile uint32_t DEBOUNCE_COOLDOWN{ 100 };
-volatile uint32_t prev_cnt = 0;
+const volatile uint32_t DIPSW_DEBOUNCE_COOLDOWN{ 200 };
+volatile uint32_t dipsw_pa0_prev_cnt = 0;
+volatile uint32_t dipsw_pa4_prev_cnt = 0;
+volatile uint32_t dipsw_pc14_prev_cnt = 0;
+volatile uint32_t dipsw_pc15_prev_cnt = 0;
+const volatile uint32_t FOOTSW_DEBOUNCE_COOLDOWN{ 100 };
+volatile uint32_t footsw_up_prev_cnt = 0;
+volatile uint32_t footsw_down_prev_cnt = 0;
 
 
 std::array<uint8_t, 4> msg{0xDE, 0xAD, 0xBE, 0xEF};
@@ -81,7 +88,7 @@ static inline bool delay(uint32_t delay_us)
 
 void setup()
 {
-
+  
     // HCLK //
     //////////
     RCC->CR |= RCC_CR_HSION_Msk;                                // enable HSI16 clk source
@@ -101,6 +108,7 @@ void setup()
 
 
     RCC->IOPENR |= RCC_IOPENR_GPIOAEN;                                  // enable GPIO bus clock (used by multiple porta pins)
+    RCC->IOPENR |= RCC_IOPENR_GPIOCEN;                                  // enable GPIO bus clock (used by multiple porta pins)
     
     // LED //
     /////////
@@ -112,8 +120,14 @@ void setup()
 
     // EXTI //
     //////////
-    // SYSCFG->EXTICR[2] |= (SYSCFG_EXTICR3_EXTI10_PA);                 // mux external interrupts line for pa10 (syscfg_exticr3) 
-                                                                        // to the internal edge detector 
+    RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN_Msk;
+    SYSCFG->EXTICR[0] |= (SYSCFG_EXTICR1_EXTI0_PA);                     // map Port A GPIOs to EXTI0    
+    SYSCFG->EXTICR[1] |= (SYSCFG_EXTICR2_EXTI4_PA);                     // map Port A GPIOs to EXTI4    
+    SYSCFG->EXTICR[2] |= (SYSCFG_EXTICR3_EXTI9_PA);                     // map Port A GPIOs to EXTI9
+    SYSCFG->EXTICR[2] |= (SYSCFG_EXTICR3_EXTI10_PA);                    // map Port A GPIOs to EXTI10
+    SYSCFG->EXTICR[3] |= (SYSCFG_EXTICR4_EXTI14_PC);                    // map Port C GPIOs to EXTI14
+    SYSCFG->EXTICR[3] |= (SYSCFG_EXTICR4_EXTI15_PC);                    // map Port C GPIOs to EXTI15
+                                                                        
     // PA10
     GPIOA->MODER &= ~((GPIO_MODER_MODE10_0) | (GPIO_MODER_MODE10_1));   // setup pa10 gpio as input (0x00)
     GPIOA->PUPDR |= (GPIO_PUPDR_PUPD10_0);                              // set pa10 gpio pullup (0x01)
@@ -127,7 +141,40 @@ void setup()
     GPIOA->PUPDR &= ~(GPIO_PUPDR_PUPD9_1);
     EXTI->IMR |= EXTI_IMR_IM9_Msk;                                      // enable interupt request in interrupt mask register
     EXTI->FTSR |= EXTI_FTSR_FT9_Msk;                                    // program trigger resistors with edge detection
+
+    // PA0 - EXT_MIDI_CH_BIT4
+    GPIOA->MODER &= ~((GPIO_MODER_MODE0_0) | (GPIO_MODER_MODE0_1));   // setup pa0 gpio as input (0x00)
+    GPIOA->PUPDR |= (GPIO_PUPDR_PUPD0_0);                              // set pa0 gpio pullup (0x01)
+    GPIOA->PUPDR &= ~(GPIO_PUPDR_PUPD0_1);
+    EXTI->IMR |= EXTI_IMR_IM0_Msk;                                     // enable interupt request in interrupt mask register
+    EXTI->FTSR |= EXTI_FTSR_FT0_Msk;                                   // program trigger resistors with edge detection
+    EXTI->RTSR |= EXTI_RTSR_RT0_Msk;                                   // program trigger resistors with edge detection
+
+    // PA4 - EXT_MIDI_CH_BIT1
+    GPIOA->MODER &= ~((GPIO_MODER_MODE4_0) | (GPIO_MODER_MODE4_1));   // setup pa4 gpio as input (0x00)
+    GPIOA->PUPDR |= (GPIO_PUPDR_PUPD4_0);                              // set pa4 gpio pullup (0x01)
+    GPIOA->PUPDR &= ~(GPIO_PUPDR_PUPD4_1);
+    EXTI->IMR |= EXTI_IMR_IM4_Msk;                                     // enable interupt request in interrupt mask register
+    EXTI->FTSR |= EXTI_FTSR_FT4_Msk;                                   // program trigger resistors with edge detection
+
+    // PC14 - EXT_MIDI_CH_BIT2
+    GPIOC->MODER &= ~((GPIO_MODER_MODE14_0) | (GPIO_MODER_MODE14_1));   // setup pc14 gpio as input (0x00)
+    GPIOC->PUPDR |= (GPIO_PUPDR_PUPD14_0);                              // set pc14 gpio pullup (0x01)
+    GPIOC->PUPDR &= ~(GPIO_PUPDR_PUPD14_1);
+    EXTI->IMR |= EXTI_IMR_IM14_Msk;                                     // enable interupt request in interrupt mask register
+    EXTI->RTSR |= EXTI_FTSR_FT14_Msk;                                   // program trigger resistors with edge detection
+    EXTI->FTSR |= EXTI_FTSR_FT14_Msk;                                   // program trigger resistors with edge detection
+
+    // PC15 - EXT_MIDI_CH_BIT3
+    GPIOC->MODER &= ~((GPIO_MODER_MODE15_0) | (GPIO_MODER_MODE15_1));   // setup pc15 gpio as input (0x00)
+    GPIOC->PUPDR |= (GPIO_PUPDR_PUPD15_0);                              // set pc15 gpio pullup (0x01)
+    GPIOC->PUPDR &= ~(GPIO_PUPDR_PUPD15_1);
+    EXTI->IMR |= EXTI_IMR_IM15_Msk;                                     // enable interupt request in interrupt mask register
+    EXTI->RTSR |= EXTI_FTSR_FT15_Msk;                                   // program trigger resistors with edge detection
+    EXTI->FTSR |= EXTI_FTSR_FT15_Msk;                                   // program trigger resistors with edge detection
     
+    NVIC_EnableIRQ(EXTI0_1_IRQn);                                      // configure nvic irq channel and prio
+    NVIC_SetPriority(EXTI0_1_IRQn, _EXTI_ISR_PRIORITY);  
     NVIC_EnableIRQ(EXTI4_15_IRQn);                                      // configure nvic irq channel and prio
     NVIC_SetPriority(EXTI4_15_IRQn, _EXTI_ISR_PRIORITY); 
 
@@ -192,6 +239,8 @@ void toggle_led(uint32_t sleep = 0)
 
 int main()
 {
+
+    SEGGER_RTT_ConfigUpBuffer(0, NULL, NULL, 0, SEGGER_RTT_MODE_BLOCK_IF_FIFO_FULL);
     [[maybe_unused]] uint32_t tmp = get_clk_freq();
     setup();
     tmp = get_clk_freq();
@@ -203,22 +252,158 @@ int main()
     }
 }
 
+void EXTI0_1_IRQHandler()
+{
+    SEGGER_RTT_printf(0, "EXTI0_1_IRQHandler\r\n");
+
+    // PA0 EXTI - EXT_MIDI_CH_BIT4
+    if (EXTI->PR & EXTI_IMR_IM0_Msk)            
+    {
+        uint32_t tmp_cnt = TIM21->CNT;
+        if ((tmp_cnt - dipsw_pa0_prev_cnt) > DIPSW_DEBOUNCE_COOLDOWN)
+        {        
+            // PA0 is 3V3 High
+            if (GPIOA->IDR & GPIO_IDR_ID0_Msk)      
+            {
+                SEGGER_RTT_printf(0, "%d - PA0 ON\r\n", GPIOA->IDR & GPIO_IDR_ID0_Msk);
+                enable_led(true);
+            }
+            else
+            {
+                SEGGER_RTT_printf(0, "%d - PA0 OFF\r\n", GPIOA->IDR & GPIO_IDR_ID0_Msk);
+                enable_led(false);                            
+            }
+        }
+        else
+        {
+            SEGGER_RTT_printf(0, "Debounced\r\n");
+        }
+        EXTI->PR |= (EXTI_PR_PIF0_Msk);
+        dipsw_pa0_prev_cnt = tmp_cnt;
+    }
+}
+
 void EXTI4_15_IRQHandler()
 {
-    // do stuff
-    uint32_t tmp_cnt = TIM21->CNT;
-    if ((tmp_cnt - prev_cnt) > DEBOUNCE_COOLDOWN)
+    SEGGER_RTT_printf(0, "EXTI4_15_IRQHandler\r\n");
+    
+    // PA9 EXTI - EXT_DOWN_PRESET_SW
+    if (EXTI->PR & EXTI_IMR_IM9_Msk)                
     {
-        toggle_led();
-        LPUART1->CR1 |=  ( USART_CR1_TXEIE_Msk );                              // Enable TXE (tx data reg transferred) interrupts
-    }
-    prev_cnt = tmp_cnt;
-
-    // clear the pending bit for the interrupt line
-    if (EXTI->PR == EXTI_IMR_IM10_Msk)
-        EXTI->PR |= (EXTI_PR_PIF10_Msk);
-    if (EXTI->PR == EXTI_IMR_IM9_Msk)
+        uint32_t tmp_cnt = TIM21->CNT;
+        if ((tmp_cnt - footsw_down_prev_cnt) > FOOTSW_DEBOUNCE_COOLDOWN)
+        {
+            SEGGER_RTT_printf(0, "PA9\r\n");
+            toggle_led();
+            // Enable TXE (tx data reg transferred) interrupts
+            LPUART1->CR1 |=  ( USART_CR1_TXEIE_Msk );   
+        }
+        else
+        {
+            SEGGER_RTT_printf(0, "Debounced\r\n");
+        }
         EXTI->PR |= (EXTI_PR_PIF9_Msk);
+        footsw_down_prev_cnt = tmp_cnt;
+    }
+
+    // PA10 EXTI - EXT_UP_PRESET_SW
+    else if (EXTI->PR & EXTI_IMR_IM10_Msk)         
+    {
+        uint32_t tmp_cnt = TIM21->CNT;
+        if ((tmp_cnt - footsw_up_prev_cnt) > FOOTSW_DEBOUNCE_COOLDOWN)
+        {
+            SEGGER_RTT_printf(0, "PA10\r\n");
+            toggle_led();
+            // Enable TXE (tx data reg transferred) interrupts
+            LPUART1->CR1 |=  ( USART_CR1_TXEIE_Msk );   
+        }
+        else
+        {
+            SEGGER_RTT_printf(0, "Debounced\r\n");
+        }
+        EXTI->PR |= (EXTI_PR_PIF10_Msk);            
+        footsw_up_prev_cnt = tmp_cnt;
+    }
+
+    // PA4 EXTI - EXT_MIDI_CH_BIT1
+    else if (EXTI->PR & EXTI_IMR_IM4_Msk)          
+    {
+        uint32_t tmp_cnt = TIM21->CNT;
+        if ((tmp_cnt - dipsw_pa4_prev_cnt) > DIPSW_DEBOUNCE_COOLDOWN)
+        {
+            // PA4 is 3V3 High
+            if (GPIOA->IDR & GPIO_IDR_ID4_Msk)      
+            {
+                SEGGER_RTT_printf(0, "%d - PA4 ON\r\n", GPIOA->IDR & GPIO_IDR_ID4_Msk);
+                enable_led(true);
+            }
+            else
+            {
+                SEGGER_RTT_printf(0, "%d - PA4 OFF\r\n", GPIOA->IDR & GPIO_IDR_ID4_Msk);
+                enable_led(false);                            
+            }
+        }
+        else
+        {
+            SEGGER_RTT_printf(0, "Debounced\r\n");
+        }
+        EXTI->PR |= (EXTI_PR_PIF4_Msk); 
+        dipsw_pa4_prev_cnt = tmp_cnt;
+    }
+    
+    // PC14 EXTI - EXT_MIDI_CH_BIT2
+    else if (EXTI->PR & EXTI_IMR_IM14_Msk)          
+    {
+        uint32_t tmp_cnt = TIM21->CNT;
+        if ((tmp_cnt - dipsw_pc14_prev_cnt) > DIPSW_DEBOUNCE_COOLDOWN)
+        {        
+            // PC14 is 3V3 High
+            if (GPIOC->IDR & GPIO_IDR_ID14_Msk)      
+            {
+                SEGGER_RTT_printf(0, "%d - PC14 ON\r\n", GPIOC->IDR & GPIO_IDR_ID14_Msk);
+                enable_led(true);
+            }
+            else
+            {
+                SEGGER_RTT_printf(0, "%d - PC14 OFF\r\n", GPIOC->IDR & GPIO_IDR_ID14_Msk);
+                enable_led(false);                            
+            }
+        }
+        else
+        {
+            SEGGER_RTT_printf(0, "Debounced\r\n");
+        }
+        EXTI->PR |= (EXTI_PR_PIF14_Msk);
+        dipsw_pc14_prev_cnt = tmp_cnt;
+    }
+    
+    // PC15 EXTI - EXT_MIDI_CH_BIT3
+    else if (EXTI->PR & EXTI_IMR_IM15_Msk)          
+    {
+        uint32_t tmp_cnt = TIM21->CNT;
+        if ((tmp_cnt - dipsw_pc14_prev_cnt) > DIPSW_DEBOUNCE_COOLDOWN)
+        {   
+            // PC15 is 3V3 High
+            if (GPIOC->IDR & GPIO_IDR_ID15_Msk)      
+            {
+                SEGGER_RTT_printf(0, "%d - PC15 ON\r\n", GPIOC->IDR & GPIO_IDR_ID15_Msk);
+                enable_led(true);
+            }
+            else
+            {
+                SEGGER_RTT_printf(0, "%d - PC15 OFF\r\n", GPIOC->IDR & GPIO_IDR_ID15_Msk);
+                enable_led(false);                            
+            }
+        }
+        else
+        {
+            SEGGER_RTT_printf(0, "Debounced\r\n");
+        }
+        EXTI->PR |= (EXTI_PR_PIF15_Msk);
+        dipsw_pc15_prev_cnt = tmp_cnt;
+    }
+
+    
 }
 
 void TIM21_IRQHandler()

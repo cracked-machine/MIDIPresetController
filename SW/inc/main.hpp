@@ -3,8 +3,8 @@
 
 extern "C" 
 {
-
-    void EXTI4_15_IRQHandler(void);
+    void EXTI0_1_IRQHandler();
+    void EXTI4_15_IRQHandler();
     void TIM21_IRQHandler();
     void LPUART1_IRQHandler();
 }
