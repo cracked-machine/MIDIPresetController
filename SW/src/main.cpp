@@ -4,9 +4,9 @@
 #include <array>
 #include <SEGGER_RTT.h>
 
-#define UART_DIV_LPUART(__PCLK__, __BAUD__)      (((((uint64_t)(__PCLK__)*256U)) + ((__BAUD__)/2U)) / (__BAUD__))
+#include <led.hpp>
 
-// hacky quick clk adjust
+#define UART_DIV_LPUART(__PCLK__, __BAUD__)      (((((uint64_t)(__PCLK__)*256U)) + ((__BAUD__)/2U)) / (__BAUD__))
 
 
 const uint32_t _LPUART_ISR_PRIORITY = 0U;
@@ -58,9 +58,8 @@ preset_enum transmit_command_direction = IDLE;
 
 uint32_t get_clk_freq();
 void setup();
-static inline bool delay(uint32_t delay_us);
-void enable_led(bool enable, uint32_t sleep = 0);
-void toggle_led(uint32_t sleep = 0);
+
+
 void read_midi_channel();
 void print_midi_msg();
 
@@ -82,7 +81,7 @@ int main()
     [[maybe_unused]] uint32_t tmp = get_clk_freq();
     tmp = get_clk_freq();
 
-    // enable_led(false);
+    enable_led(false);
 
     while (1)
     {
@@ -430,27 +429,5 @@ uint32_t get_clk_freq()
     return result_hz;
 }
 
-static inline bool delay(uint32_t delay_us)
-{
-    // if (delay_us > 0xFFFE) { delay_us = 0xFFFE; }
-    while (TIM21->CNT < delay_us);
-    return true;
-}
 
-void enable_led(bool enable, uint32_t sleep)
-{
-    if (enable)
-        GPIOA->BSRR |= GPIO_BSRR_BS_7;
-    else
-        GPIOA->BSRR |= GPIO_BSRR_BR_7;
-    delay(sleep);
-}
 
-void toggle_led(uint32_t sleep)
-{
-    if (GPIOA->ODR & GPIO_ODR_OD7_Msk)
-        GPIOA->BSRR |= GPIO_BSRR_BR_7;
-    else
-        GPIOA->BSRR |= GPIO_BSRR_BS_7;
-    delay(sleep);
-}
