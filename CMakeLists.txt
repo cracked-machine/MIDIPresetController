@@ -30,10 +30,12 @@ add_executable(${BUILD_NAME} "")
 # build dependencies
 target_sources(${BUILD_NAME} PUBLIC
     SW/src/main.cpp
+    SW/src/isr.cpp
+    SW/src/rcc.cpp
+    
     SW/src/sys/syscalls.c
     SW/src/sys/system_stm32l0xx.c
     SW/src/sys/startup_stm32l011d4px.s
-    SW/src/isr.c
 
     SW/RTT/SEGGER_RTT_V786g/RTT/SEGGER_RTT.c
     SW/RTT/SEGGER_RTT_V786g/RTT/SEGGER_RTT_printf.c
