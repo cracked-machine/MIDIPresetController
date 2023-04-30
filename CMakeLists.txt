@@ -27,19 +27,26 @@ project(MIDIPresetController VERSION 0.1 DESCRIPTION "MIDIPresetController")
 # set the executable target
 add_executable(${BUILD_NAME} "")
 
+message("Configuration is ${CMAKE_BUILD_TYPE}")
+
+# define the configuration so software can use #if add/remove debug libs
+target_compile_definitions(${BUILD_NAME} PRIVATE "DEBUG=$<IF:$<CONFIG:Debug>,1,0>")
+
 # build dependencies
 target_sources(${BUILD_NAME} PUBLIC
     SW/src/main.cpp
-    SW/src/isr.cpp
     SW/src/rcc.cpp
-    
+    SW/src/midi.cpp
+    SW/src/tim.cpp
+
     SW/src/sys/syscalls.c
     SW/src/sys/system_stm32l0xx.c
     SW/src/sys/startup_stm32l011d4px.s
 
-    SW/RTT/SEGGER_RTT_V786g/RTT/SEGGER_RTT.c
-    SW/RTT/SEGGER_RTT_V786g/RTT/SEGGER_RTT_printf.c
-
+    # SEGGER RTT used to print output in debug config only
+    $<$<CONFIG:Debug,$<TARGET_PROPERTY:COMPILE_DEFINITIONS>>:SW/RTT/SEGGER_RTT_V786g/RTT/SEGGER_RTT.c>
+    $<$<CONFIG:Debug,$<TARGET_PROPERTY:COMPILE_DEFINITIONS>>:SW/RTT/SEGGER_RTT_V786g/RTT/SEGGER_RTT_printf.c>
+    
 )
 target_include_directories(${BUILD_NAME} PUBLIC
     SW/inc/CMSIS

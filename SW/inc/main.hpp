@@ -1,12 +1,14 @@
 #ifndef __MAIN_H__
 #define __MAIN_H__
 
+
 extern "C" 
 {
-    void EXTI0_1_IRQHandler();
-    void EXTI4_15_IRQHandler();
-    void TIM21_IRQHandler();
-    void LPUART1_IRQHandler();
+void NMI_Handler(void);
+void HardFault_Handler(void);
+void SVC_Handler(void);
+void PendSV_Handler(void);
+void SysTick_Handler(void);
 }
 
 #endif // __MAIN_H__
