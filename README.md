@@ -37,17 +37,3 @@ See [stm32_dev_docker/README.md](https://github.com/cracked-machine/stm32_dev_do
 
 Note: this project is currently configured for a specific version of CMake and ARM compiler. The paths are hard-coded in the project [here](.vscode/settings.json)
 
-
-### RevB Todo
-
-- `R6` and `R5` pull-down resistors should be pull-up resistors to counter-act `J4` and `J5` switches that are connected to `ground`. 
-    - Workaround: DNF R6 and R5.
-- Move `J3` footprint away from NRST `SW1` footprint. 
-    - Workaround: It is still possible to plug debug cable into `J3` without it being obstructed by `SW1`.
-
-### SW TODO
-
-- Enable timer for debounce
-- Enable USART output
-- Encode MIDI mesg in USART
-- Enable VREF for battery level monitoring
