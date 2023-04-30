@@ -14,18 +14,18 @@ cmake_minimum_required(VERSION 3.13)
 # this variable is only used by size/objcopy. compiler is set by cmake configuration command.
 # set(TOOLCHAIN /opt/arm-gnu-toolchain-12.2.rel1-x86_64-arm-none-eabi/bin/arm-none-eabi-)
 
-
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_C_STANDARD    23)
 set(CMAKE_CXX_STANDARD  23)
+
+set(BUILD_NAME          build.elf)
+add_executable(${BUILD_NAME} "")
 
 # toolchain definitions
 include(SW/stm32.cmake)
 
 # Declare the project 
 project(MIDIPresetController VERSION 0.1 DESCRIPTION "MIDIPresetController")
-
-# set the executable target
-add_executable(${BUILD_NAME} "")
 
 message("Configuration is ${CMAKE_BUILD_TYPE}")
 
