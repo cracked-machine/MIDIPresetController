@@ -9,7 +9,9 @@
             "extensions": [
                 "ms-vscode.cpptools",
                 "ms-vscode.cmake-tools",
-                "marus25.cortex-debug"
+                "marus25.cortex-debug",
+                "zixuanwang.linkerscript",
+                "trond-snekvik.gnu-mapfiles"
             ]
         }
     },
@@ -26,5 +28,6 @@
     "mounts": [
         // Map the X11 socket from the host
         "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind,consistency=cached"
-    ]
+    ],
+    
 }
