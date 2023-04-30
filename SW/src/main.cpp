@@ -2,16 +2,12 @@
 #include "main.hpp"
 #include "stm32l011xx.h"
 #include <array>
-#include <bitset>
 #include <SEGGER_RTT.h>
 
 #define UART_DIV_LPUART(__PCLK__, __BAUD__)      (((((uint64_t)(__PCLK__)*256U)) + ((__BAUD__)/2U)) / (__BAUD__))
 
 // hacky quick clk adjust
-#define _HCLK12MHZ (RCC_CFGR_PLLMUL3 | RCC_CFGR_PLLDIV4)
-#define _HCLK16MHZ (RCC_CFGR_PLLMUL3 | RCC_CFGR_PLLDIV3)
-#define _HCLK24MHZ (RCC_CFGR_PLLMUL3 | RCC_CFGR_PLLDIV2)
-#define _HCLK32MHZ (RCC_CFGR_PLLMUL6 | RCC_CFGR_PLLDIV3)
+
 
 const uint32_t _LPUART_ISR_PRIORITY = 0U;
 const uint32_t _TIM21_ISR_PRIORITY = 0U;
@@ -28,12 +24,22 @@ volatile uint32_t footsw_down_prev_cnt = 0;
 
 
 // MIDI CC messages - 0xnc, 0xcc, 0xvv 
-//   n is the status (0xB)
+// LSB first: starting left to right
+//   n is the status type (0xB)
 //   c is the MIDI channel
 //   cc is the controller number (0-127)
 //   vv is the controller value (0-127)
-std::array<uint8_t, 3> midi_up_preset_msg{0xB0, 0x82, 0x00};   // 0x82 is nemesis preset up cmd 
-std::array<uint8_t, 3> midi_down_preset_msg{0xB0, 0x80, 0x00}; // 0x80 is nemesis preset down cmd
+// 0x82 is nemesis preset up cmd 
+std::array<uint8_t, 3> midi_up_preset_msg{0xB0, 0x82, 0x00};  
+
+// MIDI CC messages - 0xnc, 0xcc, 0xvv 
+// LSB first: starting left to right
+//   n is the status type (0xB)
+//   c is the MIDI channel
+//   cc is the controller number (0-127)
+//   vv is the controller value (0-127)
+// 0x80 is nemesis preset down cmd
+std::array<uint8_t, 3> midi_down_preset_msg{0xB0, 0x80, 0x00}; 
 
 uint8_t midi_channel{0};    // only 4 lsb bits used 
 #define midi_chan_mask (midi_channel << 0U)
@@ -75,6 +81,8 @@ int main()
 
     [[maybe_unused]] uint32_t tmp = get_clk_freq();
     tmp = get_clk_freq();
+
+    // enable_led(false);
 
     while (1)
     {
@@ -131,6 +139,7 @@ void EXTI4_15_IRQHandler()
             {
                 midi_preset_counter--;
                 midi_down_preset_msg[2] = midi_preset_counter;
+                SEGGER_RTT_printf(0, "DOWN %d\r\n", midi_preset_counter); 
                 print_midi_msg();
             }
             transmit_command_direction = DOWN_COMMAND;
@@ -156,6 +165,8 @@ void EXTI4_15_IRQHandler()
             {
                 midi_preset_counter++;
                 midi_up_preset_msg[2] = midi_preset_counter;
+                SEGGER_RTT_printf(0, "UP %d\r\n", midi_preset_counter); 
+                print_midi_msg();
             }
             transmit_command_direction = UP_COMMAND;
             // Enable TXE (tx data reg transferred) interrupts to start the LPUART transmission
@@ -224,7 +235,7 @@ void LPUART1_IRQHandler()
 void TIM21_IRQHandler()
 {
     // do stuff
-    // toggle_led();
+    toggle_led();
     // clear the interrupt
     TIM21->SR &= ~(TIM_SR_UIF_Msk);
 }
@@ -254,7 +265,18 @@ void setup()
     while((RCC->CR & RCC_CR_PLLRDY) != 0) { }                   // Wait for PLLRDY to be cleared
 
     FLASH->ACR |= FLASH_ACR_LATENCY;                            // Set latency to 1 wait state
-    RCC->CFGR |= _HCLK32MHZ;                                    // Set the PLL multiplier to 4 and divider by 2 (32MHz)
+    RCC->CFGR |= (RCC_CFGR_PLLMUL3 | RCC_CFGR_PLLDIV2);         // Set the PLL to 24MHz (assuming RCC_CFGR_HPRE_DIV1 is set below)
+
+    RCC->CFGR &= ~(RCC_CFGR_HPRE_DIV512);                       // mask write all four bits to zero
+    RCC->CFGR |= (RCC_CFGR_HPRE_DIV1);                          // 24Mhz
+    // RCC->CFGR |= (RCC_CFGR_HPRE_DIV2);                          // 12MHz
+    // RCC->CFGR |= (RCC_CFGR_HPRE_DIV4);                          // 6Mhz
+    // RCC->CFGR |= (RCC_CFGR_HPRE_DIV8);                          // 3MHz
+    // RCC->CFGR |= (RCC_CFGR_HPRE_DIV16);                         // 1.5MHz
+    // RCC->CFGR |= (RCC_CFGR_HPRE_DIV64);                         // 0.375MHz
+    // RCC->CFGR |= (RCC_CFGR_HPRE_DIV128);                        // 0.1875MHz
+    // RCC->CFGR |= (RCC_CFGR_HPRE_DIV256);                        // 0.09375MHz
+    // RCC->CFGR |= (RCC_CFGR_HPRE_DIV512);                        // 0.046875MHz
     
     RCC->CR |= RCC_CR_PLLON;                                    // Enable the PLL
     while ((RCC->CR & RCC_CR_PLLRDY) == 0) { }                  // Wait until PLLRDY is set
@@ -326,7 +348,9 @@ void setup()
     GPIOA->OSPEEDR |= GPIO_OSPEEDER_OSPEED1_Msk;                        // "very fast" speed
     
     RCC->APB1ENR |= RCC_APB1ENR_LPUART1EN_Msk;                          // enable the APB1 bus clock used by LPUART
-    RCC->CCIPR &= ~(RCC_CCIPR_LPUART1SEL_Msk);                           // APB clock selected as LPUART source
+    RCC->CCIPR &= ~(RCC_CCIPR_LPUART1SEL_1 | RCC_CCIPR_LPUART1SEL_0);   // Reset. APB/PCLK (HSI16 via PLL and AHB PSC) selected as LPUART source
+    // RCC->CCIPR |= (RCC_CCIPR_LPUART1SEL_0);                             // SystemClock (HSI16 via PLL) selected as LPUART source
+    // RCC->CCIPR |= (RCC_CCIPR_LPUART1SEL_1);                             // direct HSI16 (No Multipliers or PSCs) selected as LPUART source
     
     LPUART1->CR1 &= ~((USART_CR1_M0_Msk) | (USART_CR1_M1_Msk));          // 1 start bit, 8 data bits, n stop bits
     uint32_t pclk = get_clk_freq();                                     // baud rate
@@ -349,7 +373,9 @@ void setup()
     TIM21->CR1 |= (TIM_CR1_ARPE_Msk);                                   // preload buffer
     TIM21->PSC = 0xFFFF;                                                    // prescaler
     TIM21->ARR = 0xFFFFFFFE;                                            // auto-reload value
-    
+    // TIM21->PSC = 0x1;                                                    // prescaler
+    // TIM21->ARR = 0xF;       
+
     // TIM21->DIER |= (TIM_DIER_UIE_Msk);                                  // enable interrupts
     // NVIC_EnableIRQ(TIM21_IRQn); 
     // NVIC_SetPriority(TIM21_IRQn,_TIM21_ISR_PRIORITY);    
