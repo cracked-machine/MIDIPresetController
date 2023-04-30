@@ -27,6 +27,12 @@ A removable "belly plate" on the enclosure provides access to the battery, MIDI 
 
 ### Development Environment
 
+YOu can run this project from within a container and program the board via a Segger JLink. This uses `JLinkRemoteServer` to establish a connect between the container environment and the device connected to the `host` PC. To enable this connection, run the follow command on the __host__ terminal:
+
+```
+JLinkRemoteServer --select USB
+```
+
 See [stm32_dev_docker/README.md](https://github.com/cracked-machine/stm32_dev_docker) for instructions on using the `development environment` for this project.
 
 Note: this project is currently configured for a specific version of CMake and ARM compiler. The paths are hard-coded in the project [here](.vscode/settings.json)
